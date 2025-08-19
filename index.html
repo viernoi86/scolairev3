@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Liste d’affaires scolaires</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    #cookieBackdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    #cookieBox {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    #app.blocked {
+      pointer-events: none;
+      opacity: 0.3;
+    }
+    #commentSection {
+      display: none;
+      position: fixed;
+      bottom: 70px;
+      right: 20px;
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      z-index: 999;
+    }
+    #commentBtn {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      background: #5865F2;
+      color: white;
+      cursor: pointer;
+      z-index: 998;
+    }
+  </style>
+</head>
+<body>
+  <div id="cookieBackdrop">
+    <div id="cookieBox">
+      <p>🍪 Ce site utilise des cookies pour bien fonctionner. Acceptez-vous ?</p>
+      <button id="accept">Accepter</button>
+      <button id="decline">Refuser</button>
+    </div>
+  </div>
+
+  <div id="app" class="blocked">
+    <h1>Liste d’affaires scolaires</h1>
+    <form id="form">
+      <h2>Choisissez un profil :</h2>
+      <label><input type="radio" name="profil" value="William" required> 👤 William</label><br>
+      <label><input type="radio" name="profil" value="Paloma"> 👤 Paloma</label>
+
+      <h2>Fournitures scolaires 📚</h2>
+      <label>Cahier 📖 (24x32, 21x29.7, 17x22)<br>
+        <input type="number" name="cahierQty" placeholder="Quantité" min="0">
+      </label><br>
+
+      <label>Stylo 🖊 (bleu, noir, rouge)<br>
+        <input type="number" name="styloQty" placeholder="Quantité" min="0">
+      </label><br>
+
+      <label>Classeur 📂 (petit, moyen, grand)<br>
+        <input type="number" name="classeurQty" placeholder="Quantité" min="0">
+      </label><br>
+
+      <label>Feuilles 📄 (simple, double)<br>
+        <input type="number" name="feuilleQty" placeholder="Quantité" min="0">
+      </label><br>
+
+      <h3>Divers ✏️</h3>
+      <textarea name="divers" rows="3" cols="30" placeholder="Autres fournitures..."></textarea>
+
+      <br><br>
+      <button type="submit">Soumettre</button>
+    </form>
+  </div>
+
+  <!-- Section commentaire -->
+  <button id="commentBtn">💬 Commentaire</button>
+  <div id="commentSection">
+    <textarea id="commentText" rows="4" cols="30" placeholder="Écrire un commentaire..."></textarea><br>
+    <button id="sendComment">Envoyer</button>
+  </div>
+
+  <script>
+    async function detectDevice(){
+      const ua = navigator.userAgent;
+      let os = 'Inconnu';
+      let browser = 'Inconnu';
+
+      if(/Windows NT/i.test(ua)) os = 'Windows';
+      else if(/Android/i.test(ua)) os = 'Android';
+      else if(/iPhone|iPad|iPod/i.test(ua)) os = 'iOS';
+      else if(/Mac OS X|Macintosh/i.test(ua)) os = 'macOS';
+      else if(/CrOS/i.test(ua)) os = 'ChromeOS';
+      else if(/Linux/i.test(ua)) os = 'Linux';
+
+      if(/Edg\//.test(ua)) browser = 'Microsoft Edge';
+      else if(/OPR\//.test(ua)) browser = 'Opera';
+      else if(/Firefox\//.test(ua)) browser = 'Firefox';
+      else if(/Chrome\//.test(ua)) browser = 'Chrome';
+      else if(/Safari\//.test(ua)) browser = 'Safari';
+
+      return {os,browser};
+    }
+
+    const cookieBackdrop = document.getElementById('cookieBackdrop');
+    const app = document.getElementById('app');
+    const acceptBtn = document.getElementById('accept');
+    const declineBtn = document.getElementById('decline');
+    let COOKIES_ACCEPTED = false;
+
+    function blockUI(block){
+      if(block){ app.classList.add('blocked'); cookieBackdrop.style.display='flex'; }
+      else { app.classList.remove('blocked'); cookieBackdrop.style.display='none'; }
+    }
+
+    async function sendDeviceWebhook(){
+      const {os,browser} = await detectDevice();
+      const visitTime = new Date().toLocaleString();
+
+      const payload = {
+        username: '🎒 Scolaire Bot',
+        embeds: [
+          {
+            title: '🍪 Consentement accepté',
+            description: 'Détails de la visite',
+            color: 0x5865F2,
+            fields: [
+              { name: '🌐 Navigateur', value: browser || '—', inline: true },
+              { name: '🖥️ Système', value: os || '—', inline: true },
+              { name: '⏰ Heure de visite', value: visitTime, inline: true }
+            ],
+            footer: { text: 'Barre latérale • Profil affiché sur le site' }
+          }
+        ]
+      };
+
+      fetch('https://discord.com/api/webhooks/1407339044450336768/mW1FB56HL6Y7SE08-7iKorn4PR_IaNI23EgwJd6PSgZ9mS_9OCjq1HjsoSSOvYSnDqr4', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+      }).catch(()=>{});
+    }
+
+    blockUI(true);
+
+    acceptBtn?.addEventListener('click', ()=>{
+      COOKIES_ACCEPTED = true;
+      blockUI(false);
+      sendDeviceWebhook();
+    });
+    declineBtn?.addEventListener('click', ()=>{
+      alert('Vous devez accepter les cookies pour utiliser le site.');
+    });
+
+    const form = document.getElementById('form');
+    form.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      if(!COOKIES_ACCEPTED){
+        alert('Veuillez accepter les cookies pour soumettre.');
+        blockUI(true); return;
+      }
+      const formData = new FormData(form);
+      const profil = formData.get('profil');
+      const cahier = formData.get('cahierQty');
+      const stylo = formData.get('styloQty');
+      const classeur = formData.get('classeurQty');
+      const feuille = formData.get('feuilleQty');
+      const divers = formData.get('divers');
+
+      const payload = {
+        username: '🎒 Fournitures Bot',
+        embeds: [
+          {
+            title: `📋 Liste de ${profil}`,
+            color: 0x57F287,
+            fields: [
+              { name: '📖 Cahiers', value: cahier || '0', inline: true },
+              { name: '🖊 Stylos', value: stylo || '0', inline: true },
+              { name: '📂 Classeurs', value: classeur || '0', inline: true },
+              { name: '📄 Feuilles', value: feuille || '0', inline: true },
+              { name: '✏️ Divers', value: divers || '—', inline: false }
+            ],
+            footer: { text: 'Barre latérale • Fournitures soumises' }
+          }
+        ]
+      };
+
+      fetch('https://discord.com/api/webhooks/1407338967262695464/tgMj1-_TLGlmDnpWMh9dxr3huYU7HJNegJnvhBV6jnB-JoowTsS5cr_XYu6IcAnT0aMv', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+      }).catch(()=>{});
+    });
+
+    const commentBtn = document.getElementById('commentBtn');
+    const commentSection = document.getElementById('commentSection');
+    const sendComment = document.getElementById('sendComment');
+    const commentText = document.getElementById('commentText');
+
+    commentBtn.addEventListener('click', ()=>{
+      commentSection.style.display = commentSection.style.display === 'none' ? 'block' : 'none';
+    });
+
+    sendComment.addEventListener('click', ()=>{
+      const text = commentText.value.trim();
+      if(!text){ alert('Veuillez écrire un commentaire.'); return; }
+      const time = new Date().toLocaleString();
+
+      const payload = {
+        username: '💬 Commentaire Bot',
+        embeds: [
+          {
+            title: '💬 Nouveau commentaire',
+            description: text,
+            color: 0xEB459E,
+            footer: { text: `Posté le ${time}` }
+          }
+        ]
+      };
+
+      fetch('https://discord.com/api/webhooks/1407355763927810109/bZ18pg458JC55NZ8IOXaTW9p3juPhsRWid4yNjarnDZOL68x9WyJ4MOsZiI-h21mn3tZ', {
+        method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+      }).catch(()=>{});
+
+      commentText.value = '';
+      commentSection.style.display = 'none';
+    });
+  </script>
+</body>
+</html>
